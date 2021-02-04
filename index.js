@@ -1,6 +1,10 @@
 const request = require('request');
+const cheerio = require("cheerio");
+const superagent = require("superagent");
 
-const webHookURL = '[企业微信群机器人WebHook]'
+const weiboURL = 'https://s.weibo.com';
+const weiboHotSearch = weiboURL + '/top/summary?cate=realtimehot';
+const webHookURL = '[企业微信 WebHookURL]'
 
 function requestfun(msg) {
     var resData = {
@@ -9,46 +13,56 @@ function requestfun(msg) {
             "content": msg,
         }
     };
-    // url 为企业机器人的webhook
-    request({
-        url: webHookURL,
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-        },
-        body: JSON.stringify(resData)
-    }, function (error, response, body) {
+    superagent.post(webHookURL)
+    .set('content-type', 'application/json')
+    .send(JSON.stringify(resData))
+    .end((err,res) => {
         console.log('消息发送成功！');
-    });
+    })
 }
 
-// 获取微博热搜榜
-function sendWeiboData() {
-    request({
-        url: "https://api.hmister.cn/weibo/",
-        method: "GET",
-        headers: {
-            "content-type": "application/json",
-        },
-    }, function (error, res, body) {
-        const data = JSON.parse(body) || {}
-        if(data.code === 200) {
-            console.log('获取微博热搜数据成功~');
-            // console.log(data.data);
-        }
-        var sendMsg = '微博热搜榜前十：';
-        data.data.splice(0,10).forEach(item => {
-            sendMsg += `\n[${item.id}. ${item.name}](${item.url})`
-        })
-        requestfun(sendMsg);
+function getHotSearchList() {
+    return new Promise((resolve, reject) => {
+      superagent.get(weiboHotSearch, (err, res) => {
+        if (err) reject("request error");
+        const $ = cheerio.load(res.text);
+        let hotList = [];
+        $("#pl_top_realtimehot table tbody tr").each(function (index) {
+          if (index !== 0) {
+            const $td = $(this).children().eq(1);
+            const link = weiboURL + $td.find("a").attr("href");
+            const text = $td.find("a").text();
+            const hotValue = $td.find("span").text();
+            const icon = $td.find("img").attr("src")
+              ? "https:" + $td.find("img").attr("src")
+              : "";
+            hotList.push({
+              index,
+              link,
+              text,
+              hotValue,
+              icon,
+            });
+          }
+        });
+        hotList.length ? resolve(hotList) : reject("errer");
+      });
     });
 }
-sendWeiboData();
+// 获取微博热搜榜
+async function sendWeiboData() {
+    const data = await getHotSearchList();
+    var sendMsg = '微博热搜榜前十：';
+    data.splice(0,10).forEach(item => {
+        sendMsg += `\n[${item.index}. ${item.text}](${item.link})`
+    })
+    requestfun(sendMsg);
+}
 var i = 0;
-// setInterval(() => {
-//     i++;
-//     sendWeiboData()
-//     console.log(`第${i}条消息`)
-// }, 1000 * 60 * 60);
+setInterval(() => {
+    i++;
+    sendWeiboData()
+    console.log(`第${i}条消息`)
+}, 1000 * 60 * 60);
 
 console.log('Start successfully');
