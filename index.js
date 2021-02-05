@@ -2,8 +2,6 @@ const request = require('request');
 const cheerio = require("cheerio");
 const superagent = require("superagent");
 
-const weiboURL = 'https://s.weibo.com';
-const weiboHotSearch = weiboURL + '/top/summary?cate=realtimehot';
 const webHookURL = '[企业微信 WebHookURL]'
 
 function requestfun(msg) {
@@ -21,7 +19,10 @@ function requestfun(msg) {
     })
 }
 
+// 抓取微博热搜页面，提取热搜数据json
 function getHotSearchList() {
+    const weiboURL = 'https://s.weibo.com';
+    const weiboHotSearch = weiboURL + '/top/summary?cate=realtimehot';
     return new Promise((resolve, reject) => {
       superagent.get(weiboHotSearch, (err, res) => {
         if (err) reject("request error");
@@ -58,7 +59,8 @@ async function sendWeiboData() {
     })
     requestfun(sendMsg);
 }
-var i = 0;
+sendWeiboData();
+var i = 1;
 setInterval(() => {
     i++;
     sendWeiboData()
