@@ -3,6 +3,7 @@ const fs = require('fs');
 const cheerio = require("cheerio");
 const path = require('path');
 const superagent = require("superagent");
+const { holiday_2021 } = require('./const/time');
 
 const webHookURL = '[企业微信 WebHookURL]'
 
@@ -31,7 +32,7 @@ function createWriteStream(fileName) {
 }
 
 // 写入日志
-function writeLog (writeStream, log) {
+function writeLog(writeStream, log) {
   writeStream.write(log + '\n')
 }
 
@@ -67,10 +68,10 @@ function getHotSearchList() {
       } catch (error) {
         const myDate = new Date();
         const Y = myDate.getFullYear();
-        const M = myDate.getMonth()+1;
+        const M = myDate.getMonth() + 1;
         const D = myDate.getDate();
-        const curDay = Y + '-'+ M + '-' + D;
-        const fileName = curDay + '-' + myDate.getTime()%100000;
+        const curDay = Y + '-' + M + '-' + D;
+        const fileName = curDay + '-' + myDate.getTime() % 100000;
         const accessWriteStream = createWriteStream(`${fileName}.log`);
         writeLog(accessWriteStream, `报错时间：\n${curDay + ' ' + myDate.toTimeString()}`);
         writeLog(accessWriteStream, `微博链接：\n${weiboHotSearch}`);
@@ -93,7 +94,6 @@ async function sendWeiboData() {
   }
   var sendMsg = '微博热搜榜前十五：';
   const topTenArr = data.splice(0, 15);
-  console.log('微博热搜榜前十五：', topTenArr);
   topTenArr.forEach(item => {
     sendMsg += `\n[${item.index}. ${item.text}， 热度：${item.hotValue}](${item.link})`
   })
@@ -118,12 +118,37 @@ async function sendWeiboData() {
 //     })
 //   }
 // }
-sendWeiboData();
-var i = 1;
-setInterval(() => {
-    i++;
-    sendWeiboData()
-    console.log(`第${i}条消息`)
-}, 1000 * 60 * 60);
+// sendWeiboData();
+// 
 
+// 补充前缀0
+function addZero(num) {
+  if (num <= 9) return '0' + num;
+  return num;
+}
+
+function mySetInterval(cb, time) {
+  let timer;
+  let fn = () => {
+    cb();
+    const curHours = new Date().getHours();
+    if (curHours < 9 || curHours > 19) {
+      if (timer) clearTimeout(timer);
+      return;
+    }
+    timer = setTimeout(fn, time)
+  };
+  fn();
+}
+
+// 工作日每隔一小时爬取微博数据
+function getWeiboDataInWorkDay() {
+  const myDate = new Date();
+  const M = myDate.getMonth() + 1;
+  const D = myDate.getDate();
+  // 非工作日返回
+  if (holiday_2021[addZero(M)][addZero(D)]) return;
+  mySetInterval(sendWeiboData, 1000 * 60 * 60)
+}
+getWeiboDataInWorkDay();
 console.log('Start successfully');
