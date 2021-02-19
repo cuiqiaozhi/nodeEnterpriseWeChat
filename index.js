@@ -3,6 +3,7 @@ const fs = require('fs');
 const cheerio = require("cheerio");
 const path = require('path');
 const superagent = require("superagent");
+const schedule = require('node-schedule');
 const { holiday_2021 } = require('./const/time');
 
 const webHookURL = '[企业微信 WebHookURL]'
@@ -132,7 +133,7 @@ function mySetInterval(cb, time) {
   let fn = () => {
     cb();
     const curHours = new Date().getHours();
-    if (curHours < 9 || curHours > 19) {
+    if (curHours >= 19) {
       if (timer) clearTimeout(timer);
       return;
     }
@@ -150,5 +151,16 @@ function getWeiboDataInWorkDay() {
   if (holiday_2021[addZero(M)][addZero(D)]) return;
   mySetInterval(sendWeiboData, 1000 * 60 * 60)
 }
-getWeiboDataInWorkDay();
+// * * * * * *
+// ┬ ┬ ┬ ┬ ┬ ┬
+// │ │ │ │ │ |
+// │ │ │ │ │ └ day of week (0 - 7) (0 or 7 is Sun)
+// │ │ │ │ └───── month (1 - 12)
+// │ │ │ └────────── day of month (1 - 31)
+// │ │ └─────────────── hour (0 - 23)
+// │ └──────────────────── minute (0 - 59)
+// └───────────────────────── second (0 - 59, OPTIONAL)
+schedule.scheduleJob('* 30 9 * * *', function(){
+  getWeiboDataInWorkDay();
+});
 console.log('Start successfully');
