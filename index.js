@@ -6,7 +6,7 @@ const superagent = require("superagent");
 const schedule = require('node-schedule');
 const { holiday_2021 } = require('./const/time');
 
-const webHookURL = '[企业微信 WebHookURL]'
+const webHookURL = '[企业微信 WebHookURL]';
 
 function requestfun(msg) {
   var resData = {
@@ -85,7 +85,7 @@ function getHotSearchList() {
     });
   });
 }
-// 获取微博热搜榜
+// 发送微博热搜榜
 async function sendWeiboData() {
   let data;
   try {
@@ -102,7 +102,7 @@ async function sendWeiboData() {
 }
 // 爬取微博图片
 // function getWeiboPics() {
-//   const containerId="1076035796662600"; // 吴宣仪ID
+//   const containerId="1076032902408801"; // 宋茜ID
 //   const url = `https://m.weibo.cn/api/container/getIndex?containerid=${containerId}&page=`;
 //   for(var i = 1; i < 3; i++) {
 //     superagent(url + i, (err, res) => {
@@ -119,8 +119,8 @@ async function sendWeiboData() {
 //     })
 //   }
 // }
-// sendWeiboData();
-// 
+// getWeiboPics();
+
 
 // 补充前缀0
 function addZero(num) {
@@ -137,7 +137,7 @@ function mySetInterval(cb, time) {
       if (timer) clearTimeout(timer);
       return;
     }
-    timer = setTimeout(fn, time)
+    timer = setTimeout(fn, time);
   };
   fn();
 }
@@ -149,7 +149,7 @@ function getWeiboDataInWorkDay() {
   const D = myDate.getDate();
   // 非工作日返回
   if (holiday_2021[addZero(M)][addZero(D)]) return;
-  mySetInterval(sendWeiboData, 1000 * 60 * 60)
+  mySetInterval(sendWeiboData, 1000 * 60 * 60);
 }
 // * * * * * *
 // ┬ ┬ ┬ ┬ ┬ ┬
@@ -160,7 +160,7 @@ function getWeiboDataInWorkDay() {
 // │ │ └─────────────── hour (0 - 23)
 // │ └──────────────────── minute (0 - 59)
 // └───────────────────────── second (0 - 59, OPTIONAL)
-schedule.scheduleJob('* 30 9 * * *', function(){
+schedule.scheduleJob('0 30 9 * * *', function () {
   getWeiboDataInWorkDay();
 });
 console.log('Start successfully');
