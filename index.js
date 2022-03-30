@@ -6,7 +6,7 @@ const superagent = require("superagent");
 const schedule = require('node-schedule');
 const { holiday_2021 } = require('./const/time');
 
-const webHookURL = '[企业微信 WebHookURL]';
+const webHookURL = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=b15f11d6-6c06-43d8-90c1-2b540e5730f2';
 
 function requestfun(msg) {
   var resData = {
@@ -160,7 +160,7 @@ function getWeiboDataInWorkDay() {
 // │ │ └─────────────── hour (0 - 23)
 // │ └──────────────────── minute (0 - 59)
 // └───────────────────────── second (0 - 59, OPTIONAL)
-schedule.scheduleJob('0 30 9 * * *', function () {
+schedule.scheduleJob('0 20 * * * *', function () {
   getWeiboDataInWorkDay();
 });
 console.log('Start successfully');
